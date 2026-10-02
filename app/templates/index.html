@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cala AI Asistanı</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 760px;
+            margin: 60px auto;
+            padding: 20px;
+            background: #f4f4f8;
+            color: #222;
+        }
+
+        .container {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 12px;
+            box-sizing: border-box;
+            margin: 12px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font: inherit;
+        }
+
+        button {
+            background: #2ab7ca;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #result {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .error {
+            color: #b42318;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Cala AI Asistanı</h1>
+        <p>İşletmen için bir soru sor.</p>
+
+        <form id="aiForm">
+            <textarea
+                id="question"
+                placeholder="Örneğin: Cala için sosyal medya içerik önerileri ver."
+                required
+            ></textarea>
+
+            <button id="submitButton" type="submit">
+                Yapay Zekâya Sor
+            </button>
+        </form>
+
+        <div id="result" role="status" aria-live="polite"></div>
+    </main>
+
+    <script>
+        const form = document.getElementById("aiForm");
+        const questionInput = document.getElementById("question");
+        const submitButton = document.getElementById("submitButton");
+        const result = document.getElementById("result");
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const question = questionInput.value.trim();
+
+            if (!question) {
+                result.textContent = "Lütfen bir soru yazın.";
+                result.className = "error";
+                return;
+            }
+
+            submitButton.disabled = true;
+            result.className = "";
+            result.textContent = "Yanıt hazırlanıyor...";
+
+            try {
+                const response = await fetch("/api/ask-ai", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(
+                        data.error || "İstek başarısız oldu."
+                    );
+                }
+
+               result.innerHTML = marked.parse(data.answer);
+result.className = "";
+
+            } catch (error) {
+                console.error("Yapay zekâ isteği:", error);
+
+                result.textContent =
+                    error.message ||
+                    "Bir hata oluştu. Lütfen tekrar deneyin.";
+
+                result.className = "error";
+
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
