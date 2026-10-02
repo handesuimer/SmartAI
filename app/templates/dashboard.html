@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cala AI Paneli</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 760px;
+            margin: 60px auto;
+            padding: 20px;
+            background: #f4f4f8;
+            color: #222;
+        }
+
+        .container {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+        }
+
+        .message {
+            border-top: 1px solid #eee;
+            padding: 12px 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .meta {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Son Konuşmalar</h1>
+        <p><a href="/">Asistana dön</a></p>
+
+        {% for item in conversations %}
+            <div class="message">
+                <div class="meta">
+                    {{ "Kullanıcı" if item.role == "user" else "Asistan" }} · {{ item.created_at }}
+                </div>
+                {{ item.message }}
+            </div>
+        {% else %}
+            <p>Henüz konuşma yok.</p>
+        {% endfor %}
+    </main>
+</body>
+</html>

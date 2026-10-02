@@ -2,7 +2,6 @@ import requests
 
 from config import Config
 
-import markdown
 
 def ask_ai(message):
     url = "https://api.groq.com/openai/v1/chat/completions"
@@ -38,6 +37,4 @@ def ask_ai(message):
 
     result = response.json()
 
-    return markdown.markdown(
-    result["choices"][0]["message"]["content"]
-)
+    return result["choices"][0]["message"]["content"]

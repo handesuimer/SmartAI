@@ -11,7 +11,21 @@ def index():
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+    connection = get_db_connection()
+
+    try:
+        conversations = connection.execute(
+            """
+            SELECT role, message, created_at
+            FROM conversations
+            ORDER BY id DESC
+            LIMIT 50
+            """
+        ).fetchall()
+    finally:
+        connection.close()
+
+    return render_template("dashboard.html", conversations=conversations)
 
 
 @app.route("/api/ask-ai", methods=["POST"])
