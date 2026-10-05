@@ -25,8 +25,15 @@ def dashboard():
     finally:
         connection.close()
 
-    return render_template("dashboard.html", conversations=conversations)
+    return render_template(
+        "dashboard.html",
+        conversations=conversations
+    )
 
+
+# ==========================================
+# CALA AI CHATBOT
+# ==========================================
 
 @app.route("/api/ask-ai", methods=["POST"])
 def ask_ai_route():
@@ -43,6 +50,7 @@ def ask_ai_route():
             }), 400
 
         answer = ask_ai(question)
+
         connection = get_db_connection()
 
         connection.executemany(
@@ -55,6 +63,7 @@ def ask_ai_route():
                 ("default", "assistant", answer)
             ]
         )
+
         connection.commit()
 
         return jsonify({
@@ -63,7 +72,10 @@ def ask_ai_route():
         }), 200
 
     except Exception:
-        app.logger.exception("Yapay zeka isteğinde hata oluştu.")
+        app.logger.exception(
+            "Yapay zeka isteğinde hata oluştu."
+        )
+
         return jsonify({
             "success": False,
             "error": "Yapay zeka isteği tamamlanamadı."
@@ -73,6 +85,102 @@ def ask_ai_route():
         if connection:
             connection.close()
 
+
+# ==========================================
+# İLETİŞİM FORMU - LEAD KAYDI
+# ==========================================
+
+@app.route("/api/contact", methods=["POST"])
+def contact():
+    connection = None
+
+    try:
+        data = request.get_json(silent=True) or {}
+
+        name = data.get("name", "").strip()
+        email = data.get("email", "").strip()
+        message = data.get("message", "").strip()
+
+        if not name or not email or not message:
+            return jsonify({
+                "success": False,
+                "error": "Lütfen tüm alanları doldurun."
+            }), 400
+
+        connection = get_db_connection()
+
+        connection.execute(
+            """
+            INSERT INTO leads (name, email, message)
+            VALUES (?, ?, ?)
+            """,
+            (name, email, message)
+        )
+
+        connection.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Mesajınız başarıyla kaydedildi."
+        }), 201
+
+    except Exception:
+        app.logger.exception(
+            "İletişim formu kaydedilemedi."
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "Mesaj kaydedilemedi."
+        }), 500
+
+    finally:
+        if connection:
+            connection.close()
+
+
+# ==========================================
+# YÖNETİM PANELİ - LEADLERİ GETİR
+# ==========================================
+
+@app.route("/api/contacts", methods=["GET"])
+def get_contacts():
+    connection = None
+
+    try:
+        connection = get_db_connection()
+
+        contacts = connection.execute(
+            """
+            SELECT id, name, email, message
+            FROM leads
+            ORDER BY id DESC
+            """
+        ).fetchall()
+
+        return jsonify({
+            "success": True,
+            "contacts": [dict(row) for row in contacts]
+        }), 200
+
+    except Exception:
+        app.logger.exception(
+            "İletişim kayıtları alınamadı."
+        )
+
+        return jsonify({
+            "success": False,
+            "error": "Kayıtlar alınamadı."
+        }), 500
+
+    finally:
+        if connection:
+            connection.close()
+
+
+# ==========================================
+# API HEALTH CHECK
+# ==========================================
 
 @app.route("/api/health", methods=["GET"])
 def health_check():
@@ -88,7 +196,10 @@ def health_check():
         }), 200
 
     except Exception:
-        app.logger.exception("Sağlık kontrolünde hata oluştu.")
+        app.logger.exception(
+            "Sağlık kontrolünde hata oluştu."
+        )
+
         return jsonify({
             "success": False,
             "error": "Veritabanı bağlantısı kontrol edilemedi."
